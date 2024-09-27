@@ -6,12 +6,11 @@ use connect_sdk::bindings::oracle::query::{
 use connect_sdk::bindings::marketmap::types::CurrencyPair;
 use connect_sdk::bindings::query::ConnectQuery;
 use connect_sdk::bindings::querier::ConnectQuerier;
-
-mod msgs;
-
 use cosmwasm_std::{
     entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, to_json_binary
 };
+
+mod msgs;
 
 #[entry_point]
 pub fn instantiate(
