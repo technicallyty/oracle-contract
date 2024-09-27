@@ -1,14 +1,10 @@
 use connect_sdk::bindings::marketmap::query::{LastUpdatedResponse, MarketMapResponse, MarketResponse, ParamsResponse};
 use crate::msgs::QueryMsg;
-use connect_sdk::bindings::oracle::query::{
-    GetAllCurrencyPairsResponse, GetPriceResponse, GetPricesResponse,
-};
+use connect_sdk::bindings::oracle::query::{GetAllCurrencyPairsResponse, GetPriceResponse, GetPricesResponse};
 use connect_sdk::bindings::marketmap::types::CurrencyPair;
 use connect_sdk::bindings::query::ConnectQuery;
 use connect_sdk::bindings::querier::ConnectQuerier;
-use cosmwasm_std::{
-    entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, to_json_binary
-};
+use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult, to_json_binary, Int128, StdError};
 
 mod msgs;
 
@@ -42,7 +38,7 @@ pub fn query(
             to_json_binary(&query_market_map_params(deps)?)
         }
         QueryMsg::LastUpdated {} => {
-            to_json_binary(&query_market_map_params(deps)?)
+            to_json_binary(&query_last_updated(deps)?)
         }
         QueryMsg::MarketMap {} => {
             to_json_binary(&query_market_map(deps)?)
@@ -51,6 +47,39 @@ pub fn query(
             to_json_binary(&query_market(deps, currency_pair)?)
         }
     }
+}
+fn do_something_with_price(
+    deps: Deps<ConnectQuery>,
+    env: Env,
+    currency_pair: CurrencyPair
+) -> StdResult<Int128> {
+    let connect_querier = ConnectQuerier::new(&deps.querier);
+    let base = currency_pair.base.to_uppercase();
+    let quote = currency_pair.quote.to_uppercase();
+
+    // Check if the market exists and is enabled
+    let market = connect_querier.get_marketmap_market(base.clone(), quote.clone())?;
+    if !market.market.ticker.enabled {
+        return Err(StdError::generic_err("market is not enabled"));
+    }
+
+    // Check price validity
+    let price_response = connect_querier.get_oracle_price(base, quote)?;
+    if price_response.nonce == 0 {
+        return Err(StdError::generic_err("price has never been updated"));
+    }
+
+    let max_price_age: u64 = 3; // adjust based on appetite for price freshness
+    let price_age = env.block.height - price_response.price.block_height.unwrap();
+    if price_age > max_price_age {
+        return Err(StdError::generic_err("price is too old"));
+    }
+
+    // We can now do something with the price
+    let valid_price = price_response.price.price;
+
+    // Placeholder for actual price processing
+    Ok(valid_price)
 }
 
 fn query_market_map_params(
