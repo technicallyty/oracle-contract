@@ -1,3 +1,4 @@
+use connect_sdk::bindings::marketmap::types::CurrencyPair;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,4 +8,11 @@ pub enum QueryMsg {
     Price { base: String, quote: String },
     Prices { currency_pair_ids: Vec<String> },
     CurrencyPairs {},
+
+    Params {},
+    LastUpdated {},
+    MarketMap {},
+    Market {
+        currency_pair: CurrencyPair,
+    },
 }

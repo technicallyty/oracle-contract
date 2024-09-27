@@ -1,7 +1,9 @@
+use connect_sdk::bindings::marketmap::query::{LastUpdatedResponse, MarketMapResponse, MarketResponse, ParamsResponse};
 use crate::msgs::QueryMsg;
 use connect_sdk::bindings::oracle::query::{
     GetAllCurrencyPairsResponse, GetPriceResponse, GetPricesResponse,
 };
+use connect_sdk::bindings::marketmap::types::CurrencyPair;
 use connect_sdk::bindings::query::ConnectQuery;
 use connect_sdk::bindings::querier::ConnectQuerier;
 
@@ -37,7 +39,52 @@ pub fn query(
         QueryMsg::CurrencyPairs {} => {
             to_json_binary(&query_currency_pairs(deps)?)
         }
+        QueryMsg::Params {} => {
+            to_json_binary(&query_market_map_params(deps)?)
+        }
+        QueryMsg::LastUpdated {} => {
+            to_json_binary(&query_market_map_params(deps)?)
+        }
+        QueryMsg::MarketMap {} => {
+            to_json_binary(&query_market_map(deps)?)
+        }
+        QueryMsg::Market { currency_pair } => {
+            to_json_binary(&query_market(deps, currency_pair)?)
+        }
     }
+}
+
+fn query_market_map_params(
+    deps: Deps<ConnectQuery>,
+) -> StdResult<ParamsResponse> {
+    let connect_querier = ConnectQuerier::new(&deps.querier);
+
+    connect_querier.get_marketmap_params()
+}
+
+fn query_last_updated(
+    deps: Deps<ConnectQuery>,
+) -> StdResult<LastUpdatedResponse> {
+    let connect_querier = ConnectQuerier::new(&deps.querier);
+
+    connect_querier.get_marketmap_last_updated()
+}
+
+fn query_market_map(
+    deps: Deps<ConnectQuery>,
+) -> StdResult<MarketMapResponse> {
+    let connect_querier = ConnectQuerier::new(&deps.querier);
+
+    connect_querier.get_marketmap_market_map()
+}
+
+fn query_market(
+    deps: Deps<ConnectQuery>,
+    currency_pair: CurrencyPair
+) -> StdResult<MarketResponse> {
+    let connect_querier = ConnectQuerier::new(&deps.querier);
+
+    connect_querier.get_marketmap_market(currency_pair.base, currency_pair.quote)
 }
 
 fn query_currency_pairs(
